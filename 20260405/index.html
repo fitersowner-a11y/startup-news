@@ -3,113 +3,184 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>日本スタートアップニュース - 2026年4月5日</title>
+<title>スタートアップニュース - 2026年4月5日</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; background: #f5f7fa; color: #333; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; color: #333; }
   .header { background: linear-gradient(135deg, #0066cc, #004499); color: white; padding: 32px 20px; text-align: center; }
   .header h1 { font-size: 1.8em; margin-bottom: 8px; }
   .header .date { opacity: 0.85; font-size: 1em; }
-  .container { max-width: 860px; margin: 32px auto; padding: 0 16px; }
+  .container { max-width: 900px; margin: 32px auto; padding: 0 16px; }
   .summary-box { background: white; border-radius: 12px; padding: 20px 24px; margin-bottom: 28px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); border-left: 4px solid #0066cc; }
-  .summary-box h2 { font-size: 1em; color: #0066cc; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .summary-box h2 { font-size: 1em; color: #0066cc; margin-bottom: 8px; }
   .summary-box p { line-height: 1.7; color: #555; }
-  .section-title { font-size: 1.1em; font-weight: bold; color: #444; margin: 24px 0 12px; padding-left: 10px; border-left: 3px solid #0066cc; }
-  .news-card { background: white; border-radius: 10px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); transition: box-shadow 0.2s; }
-  .news-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-  .news-card .company { font-size: 0.78em; font-weight: bold; color: #0066cc; background: #e8f0fb; padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: 6px; }
+  .region-header { display: flex; align-items: center; gap: 10px; margin: 32px 0 16px; }
+  .region-header h2 { font-size: 1.3em; font-weight: bold; color: #222; }
+  .region-divider { flex: 1; height: 2px; background: linear-gradient(to right, #0066cc, transparent); }
+  .section-title { font-size: 1em; font-weight: bold; color: #444; margin: 20px 0 10px; padding-left: 10px; border-left: 3px solid #0066cc; }
+  .news-card { background: white; border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .news-card .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 7px; }
+  .news-card .company { font-size: 0.78em; font-weight: bold; color: #0066cc; background: #e8f0fb; padding: 2px 8px; border-radius: 20px; }
+  .news-card .region-badge { font-size: 0.72em; padding: 2px 7px; border-radius: 12px; background: #f0f0f0; color: #666; }
   .news-card h3 { font-size: 1em; margin-bottom: 6px; line-height: 1.5; }
   .news-card h3 a { color: #222; text-decoration: none; }
-  .news-card h3 a:hover { color: #0066cc; text-decoration: underline; }
   .news-card .summary { font-size: 0.9em; color: #666; line-height: 1.6; }
   .news-card .source { font-size: 0.78em; color: #aaa; margin-top: 8px; }
-  .footer { text-align: center; padding: 32px 16px; color: #aaa; font-size: 0.85em; }
-  .back-link { display: inline-block; margin-top: 16px; color: #0066cc; text-decoration: none; font-size: 0.9em; }
-  .back-link:hover { text-decoration: underline; }
-  .tag { display: inline-block; font-size: 0.72em; padding: 1px 7px; border-radius: 12px; margin-right: 4px; font-weight: bold; }
+  .tag { display: inline-block; font-size: 0.72em; padding: 1px 7px; border-radius: 12px; font-weight: bold; }
   .tag-funding { background: #d4edda; color: #155724; }
   .tag-product { background: #d1ecf1; color: #0c5460; }
   .tag-ma { background: #f8d7da; color: #721c24; }
   .tag-other { background: #e2e3e5; color: #383d41; }
+  .footer { text-align: center; padding: 32px 16px; color: #aaa; font-size: 0.85em; }
+  .back-link { display: inline-block; margin-top: 24px; color: #0066cc; text-decoration: none; font-size: 0.9em; }
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>🇯🇵 日本スタートアップニュース</h1>
+  <h1>&#x1F4F0; スタートアップニュース</h1>
   <div class="date">2026年4月5日（日曜日）</div>
 </div>
 <div class="container">
   <div class="summary-box">
-    <h2>📋 本日のサマリー</h2>
-    <p>今週は大型資金調達が相次ぎ、CRISPの37億円を筆頭に、宇宙テックのOrbital Lasers（30.2億円）、ソフトウェア事業承継のマイクロニティ（22億円）など10億円超のラウンドが目立ちました。クリーンテック・防災テック・AI系スタートアップへの投資が活発化しており、日本のスタートアップエコシステムは多様なセクターで勢いを増しています。また4月3日にはMicrosoftが日本向けに約1兆6000億円のAIインフラ投資を発表し、国内AI関連企業への追い風が強まっています。</p>
+    <h2>&#x1F4CB; 本日のサマリー</h2>
+    <p>国内では3月末〜4月初旬にかけてCRISP（37億円）、Orbital Lasers（30億円）、マイクロニティ（22億円）など外食DX・宇宙テック・事業承継領域で大型資金調達が相次ぎました。SoftBank系のPayPayがNasdaqに上場し、時価総額約2兆円をつけ日本企業として10年ぶりとなる大型米国上場を果たしました。グローバルでは2026年Q1のVC投資総額が約3,000億ドルと過去最高を更新しAIスタートアップへの投資集中が顕著です。OpenAIが1,220億ドルの史上最大の資金調達を完了し評価額8,520億ドルに到達、Anthropicも300億ドルを調達。M&amp;A市場でもCapital OneによるBrex買収、Eli LillyによるOrna Therapeutics買収などの活発な動きが続いています。</p>
   </div>
 
-  <div class="section-title">💰 資金調達</div>
-
+  <div class="region-header">
+    <h2>&#x1F1EF;&#x1F1F5; 日本のスタートアップ</h2>
+    <div class="region-divider"></div>
+  </div>
+  <div class="section-title">&#x1F4B0; 資金調達</div>
   <div class="news-card">
-    <span class="company">CRISP</span>
-    <span class="tag tag-funding">資金調達</span>
-    <h3><a href="https://www.nikkei.com/article/DGXZQOUC0250R0S6A400C2000000/" target="_blank" rel="noopener">CRISP、37億円を調達——サラダ専門店の早期100店舗達成を目指す</a></h3>
-    <div class="summary">サラダ専門店チェーンを運営するCRISPが、ロッテベンチャーズ・ジャパンなどを引受先とする第三者割当増資とみずほ銀行からの借り入れで37億円を調達。東京・大阪・神奈川を中心に出店を加速し、100店舗の早期実現を目指す。</div>
+    <div class="meta"><span class="company">CRISP（クリスプ）</span><span class="tag tag-funding">資金調達</span></div>
+    <h3><a href="https://www.nikkei.com/article/DGXZQOUC0250R0S6A400C2000000/" target="_blank" rel="noopener">サラダ専門店CRISPが37億円調達、100店舗展開へ加速</a></h3>
+    <div class="summary">ロッテベンチャーズ・ジャパンなどを引受先とする第三者割当増資とみずほ銀行からの借り入れで37億円を調達。東京・大阪・神奈川を中心に展開し「早期に100店」を目指す。</div>
     <div class="source">出典: 日本経済新聞</div>
   </div>
-
   <div class="news-card">
-    <span class="company">Orbital Lasers</span>
-    <span class="tag tag-funding">資金調達</span>
-    <h3><a href="https://prtimes.jp/main/html/rd/p/000000007.000151266.html" target="_blank" rel="noopener">Orbital Lasers、シリーズAラウンドで30.2億円を調達——衛星搭載レーザーで地形計測・デブリ除去へ</a></h3>
-    <div class="summary">宇宙用レーザー技術を開発するOrbital Lasersが、スパークス・アセット・マネジメントやJICベンチャー・グロース・インベストメンツなど9社から30.2億円を調達。衛星ライダーによる高精度地形計測とスペースデブリの除去・制御事業の実現に向けて技術開発を加速させる。累計エクイティ調達額は39.2億円に。</div>
-    <div class="source">出典: PR TIMES / The Bridge</div>
+    <div class="meta"><span class="company">Orbital Lasers</span><span class="tag tag-funding">資金調達</span></div>
+    <h3><a href="https://note.com/maru56/n/n03bd3dc45c27" target="_blank" rel="noopener">宇宙テックスタートアップOrbital Lasersが30億円を調達</a></h3>
+    <div class="summary">宇宙レーザー通信・宇宙デブリ除去技術を開発するOrbital Lasersが30億円の大型資金調達を実施。スパークス・アセット・マネジメントなど9社から調達し衛星ライダー事業を加速させる。</div>
+    <div class="source">出典: 日経 / note</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">マイクロニティ</span><span class="tag tag-funding">資金調達</span></div>
+    <h3><a href="https://www.nikkei.com/article/DGXZQOUC0250R0S6A400C2000000/" target="_blank" rel="noopener">ソフトウェア事業承継のマイクロニティが22億円調達、AIエージェント開発へ</a></h3>
+    <div class="summary">ソフトウェア事業承継を手掛けるマイクロニティ（東京・渋谷）がシードラウンドで22億円を調達。老朽化ソフトウェアを買い取りAIエージェントで機能代替するモデルで、10年間に100社の事業承継を目指す。</div>
+    <div class="source">出典: 日本経済新聞</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Spectee（スペクティ）</span><span class="tag tag-funding">資金調達</span></div>
+    <h3><a href="https://www.nikkei.com/article/DGXZQOUC0250R0S6A400C2000000/" target="_blank" rel="noopener">災害情報分析のSpecteeが16億円調達、SCRクラウド機能強化へ</a></h3>
+    <div class="summary">アスエネなどを引受先に第三者割当増資と商工組合中央金庫からの融資で16億円調達（E2ラウンド）。製造業向けサプライチェーン・リスク管理クラウド「Spectee SCR」の拡大と機能強化に充てる。</div>
+    <div class="source">出典: 日本経済新聞</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Tensor Energy（テンサーエナジー）</span><span class="tag tag-funding">資金調達</span></div>
+    <h3><a href="https://www.nikkei.com/article/DGXZQOUC0250R0S6A400C2000000/" target="_blank" rel="noopener">再エネ予測のTensor Energyが9.5億円を調達、グローバル・ブレインなどから</a></h3>
+    <div class="summary">福岡市拠点の再生可能エネルギー発電量・市場価格予測サービスのTensor EnergyがシリーズAで9億5,000万円を調達。AIによる再エネ運用自動化事業を拡大する。</div>
+    <div class="source">出典: 日本経済新聞</div>
+  </div>
+  <div class="section-title">&#x1F680; 新サービス・プロダクト</div>
+  <div class="news-card">
+    <div class="meta"><span class="company">TEAMZ</span><span class="tag tag-product">イベント</span></div>
+    <h3><a href="https://www.teamz.co.jp/" target="_blank" rel="noopener">日本最大級Web3・AIカンファレンス「TEAMZ Summit 2026」が4月7〜8日に東京で開催</a></h3>
+    <div class="summary">東京・八芳園にて「Tradition Meets Tomorrow」をテーマに開催。AI・ブロックチェーン・Web3の最前線スタートアップが集結し、グローバル投資家との交流も予定。</div>
+    <div class="source">出典: TEAMZ</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">経済産業省</span><span class="tag tag-product">政策・支援</span></div>
+    <h3><a href="https://www.meti.go.jp/press/2025/12/20251223001/20251223001.html" target="_blank" rel="noopener">経済産業省「日本スタートアップ大賞2026」の審査が進行中</a></h3>
+    <div class="summary">革新的な技術・ビジネスモデルで社会課題に挑む企業を表彰する「日本スタートアップ大賞2026」が審査フェーズへ。政府主導のスタートアップ支援施策として注目されている。</div>
+    <div class="source">出典: 経済産業省</div>
   </div>
 
+  <div class="section-title">&#x1F91D; M&amp;A・業界動向</div>
   <div class="news-card">
-    <span class="company">マイクロニティ</span>
-    <span class="tag tag-funding">資金調達</span>
-    <h3><a href="https://venture.jp/news/2026/04/02/21375/" target="_blank" rel="noopener">マイクロニティ、22億円を調達——ソフトウェア事業承継をAIエージェントで変革</a></h3>
-    <div class="summary">2025年4月設立のマイクロニティが、VCとエンジェル投資家からシードラウンドで22億円を調達。老朽化したソフトウェアビジネスを買い取り、機能をAIエージェントで代替するモデルで、10年間に100社のソフトウェア事業承継を目指す。Metapsホールディングスなどからすでに事業を継承済み。</div>
-    <div class="source">出典: ベンチャー.jp / 日本経済新聞</div>
+    <div class="meta"><span class="company">PayPay</span><span class="tag tag-ma">IPO</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-12/softbank-backed-paypay-rises-19-after-880-million-ipo" target="_blank" rel="noopener">PayPayがNasdaqに上場、時価総額約2兆円—日本企業10年ぶりの大型米国上場</a></h3>
+    <div class="summary">SoftBank系フィンテックのPayPayが3月12日にNasdaqへ上場。初日に約19%上昇し時価総額約147億ドル（約2.2兆円）を達成。決済から証券・保険までカバーするオールインワン金融プラットフォームとして高く評価された。</div>
+    <div class="source">出典: Bloomberg / Japan Times</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">日本スタートアップ全体</span><span class="tag tag-other">トレンド</span></div>
+    <h3><a href="https://initial.inc/articles/japan-startup-finance-2025" target="_blank" rel="noopener">政府が2026年度より1兆円規模のスタートアップ支援パッケージを本格始動</a></h3>
+    <div class="summary">日本政府が5カ年の1兆円規模スタートアップ支援パッケージを2026年度から本格始動。2025年の国内VC投資実績は約5,000億円・546件に達しており、さらなる拡大が見込まれる。</div>
+    <div class="source">出典: スピーダ スタートアップ情報リサーチ</div>
+  </div>
+  <div class="region-header">
+    <h2>&#x1F30D; 世界のスタートアップ</h2>
+    <div class="region-divider"></div>
+  </div>
+  <div class="section-title">&#x1F4B0; 資金調達</div>
+  <div class="news-card">
+    <div class="meta"><span class="company">OpenAI</span><span class="tag tag-funding">資金調達</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-31/openai-valued-at-852-billion-after-completing-122-billion-round" target="_blank" rel="noopener">OpenAIが史上最大1,220億ドルの資金調達完了、評価額8,520億ドルに</a></h3>
+    <div class="summary">Amazon（500億ドル）、Nvidia・SoftBank（各300億ドル）など大手から計1,220億ドルを調達し評価額8,520億ドルへ到達。過去最大の資金調達ラウンドとして歴史に刻まれた。</div>
+    <div class="source">出典: Bloomberg / TechCrunch</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Anthropic</span><span class="tag tag-funding">資金調達</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://techcrunch.com/2026/04/01/startup-funding-shatters-all-records-in-q1/" target="_blank" rel="noopener">AnthropicがOpenAIに続き300億ドルを調達、評価額3,800億ドルへ</a></h3>
+    <div class="summary">AI安全性研究・開発を掲げるAnthropicが300億ドルの大型ラウンドを完結させ評価額3,800億ドルを達成。OpenAIと共にQ1 2026のAI投資ブームを牽引している。</div>
+    <div class="source">出典: TechCrunch / Crunchbase</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Physical Intelligence</span><span class="tag tag-funding">資金調達</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-27/ex-deepmind-staffers-robotics-startup-in-talks-for-11-billion-valuation" target="_blank" rel="noopener">元DeepMind研究者のロボティクス企業PIが評価額110億ドルで10億ドル調達交渉中</a></h3>
+    <div class="summary">元Google DeepMind研究者が設立したロボティクス企業Physical Intelligenceが評価額110億ドルで約10億ドルの新ラウンドを投資家と交渉中。汎用ロボットAIの開発を進める。</div>
+    <div class="source">出典: Bloomberg</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Tenex.ai</span><span class="tag tag-funding">資金調達</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-31/google-partner-tenex-raises-250-million-for-ai-security-tools" target="_blank" rel="noopener">GoogleパートナーのAIセキュリティ企業Tenexが2.5億ドルを調達、ユニコーン入り</a></h3>
+    <div class="summary">AI活用のサイバーセキュリティツールのTenex.aiがGoogleとのパートナーシップを背景に2億5,000万ドルを調達し評価額10億ドル超のユニコーンに仲間入り。</div>
+    <div class="source">出典: Bloomberg</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Yann LeCun AI Startup</span><span class="tag tag-funding">資金調達</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-10/yann-lecun-s-new-ai-startup-raises-1-billion-in-seed-funding" target="_blank" rel="noopener">AI界の巨匠Yann LeCun氏の新スタートアップがシードで10億ドルを調達</a></h3>
+    <div class="summary">Meta AI Research責任者Yann LeCun氏が新会社を設立しシードラウンドで10億ドルという破格の調達を完了。次世代AIアーキテクチャの研究開発に注力する。</div>
+    <div class="source">出典: Bloomberg</div>
+  </div>
+  <div class="section-title">&#x1F680; 新サービス・プロダクト</div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Standard Template Labs</span><span class="tag tag-product">新サービス</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-17/ex-datadog-leader-s-ai-startup-nabs-first-49-million-funding" target="_blank" rel="noopener">元Datadog社長設立のAIスタートアップが4,900万ドルの初調達を完了しサービス展開へ</a></h3>
+    <div class="summary">元Datadog社長Amit Agarwalが設立したStandard Template LabsがシリーズAで4,900万ドルを調達。エンタープライズ向けAI開発・運用ツールの本格展開を開始する。</div>
+    <div class="source">出典: Bloomberg</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Periodic Labs</span><span class="tag tag-product">新サービス</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://www.bloomberg.com/news/articles/2026-03-25/ai-science-startup-periodic-labs-is-in-deal-talks-at-about-7-billion-valuation" target="_blank" rel="noopener">AI科学プラットフォームPeriodic Labsが評価額70億ドルで交渉中、創薬AIに期待</a></h3>
+    <div class="summary">科学研究向けAIプラットフォームのPeriodic Labsが評価額約70億ドルでの大型資金調達について交渉中。創薬・材料科学分野でのAI活用ニーズを取り込む。</div>
+    <div class="source">出典: Bloomberg</div>
   </div>
 
+  <div class="section-title">&#x1F91D; M&amp;A・業界動向</div>
   <div class="news-card">
-    <span class="company">Spectee</span>
-    <span class="tag tag-funding">資金調達</span>
-    <h3><a href="https://prtimes.jp/main/html/rd/p/000000315.000016808.html" target="_blank" rel="noopener">Spectee、E2ラウンドで16億円を調達——製造業向けサプライチェーンリスク管理を強化</a></h3>
-    <div class="summary">災害情報のリアルタイム分析を手掛けるSpecteeが、アスエネや東芝デジタルソリューションズなどを引受先に16億円を調達（E2ラウンドセカンドクローズ）。製造業向けサプライチェーン・リスク管理クラウド「Spectee SCR」の事業拡大と機能強化に充当する。累計調達額は36億円に到達。</div>
-    <div class="source">出典: PR TIMES / The Bridge</div>
+    <div class="meta"><span class="company">Capital One / Brex</span><span class="tag tag-ma">買収</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/" target="_blank" rel="noopener">Capital OneがフィンテックスタートアップBrexを51.5億ドルで買収へ</a></h3>
+    <div class="summary">大手銀行Capital OneがSMB向けビジネス金融プラットフォームのBrexを約51億5,000万ドルで買収する計画を発表。フィンテック領域でのM&amp;Aが加速している。</div>
+    <div class="source">出典: Crunchbase News</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">Eli Lilly / Orna Therapeutics</span><span class="tag tag-ma">買収</span><span class="region-badge">&#x1F1FA;&#x1F1F8; 米国</span></div>
+    <h3><a href="https://news.crunchbase.com/health-wellness-biotech/startup-ma-ipo-delivering-exits/" target="_blank" rel="noopener">Eli LillyがRNA医療スタートアップOrna Therapeuticsを最大24億ドルで買収</a></h3>
+    <div class="summary">大手製薬会社Eli Lillyが先端RNA技術を持つOrna Therapeuticsを最大24億ドルで買収。バイオテクのM&amp;Aエグジットが堅調に推移している。</div>
+    <div class="source">出典: Crunchbase News</div>
+  </div>
+  <div class="news-card">
+    <div class="meta"><span class="company">グローバルVC市場</span><span class="tag tag-other">トレンド</span><span class="region-badge">&#x1F310; グローバル</span></div>
+    <h3><a href="https://news.crunchbase.com/venture/record-breaking-funding-ai-global-q1-2026/" target="_blank" rel="noopener">2026年Q1のグローバルVC投資が約3,000億ドルで過去最高更新、AI関連が81%を占有</a></h3>
+    <div class="summary">2026年第1四半期の世界VC投資総額が過去最高の約3,000億ドルに達した。AI関連スタートアップへの投資が81%（約2,420億ドル）を占め、AIブームが投資市場全体を牽引している。</div>
+    <div class="source">出典: Crunchbase / TechCrunch</div>
   </div>
 
-  <div class="news-card">
-    <span class="company">Tensor Energy</span>
-    <span class="tag tag-funding">資金調達</span>
-    <h3><a href="https://sogyotecho.jp/news/20260402tensorenergy/" target="_blank" rel="noopener">Tensor Energy、シリーズAで9.5億円調達——再エネ・蓄電池のAI運用プラットフォームを強化</a></h3>
-    <div class="summary">太陽光発電所や蓄電池の運用・財務管理をAIで自動化する「Tensor Cloud」を展開するTensor Energyが、グローバル・ブレインなどのVCからシリーズAで9.5億円を調達（4月2日）。機能開発の強化や営業・マーケティング・コーポレート体制の整備に資金を充当する予定。</div>
-    <div class="source">出典: 起業の「わからない」を「できる」に / VOIX</div>
-  </div>
-
-  <div class="section-title">🤝 業界動向・大型投資</div>
-
-  <div class="news-card">
-    <span class="company">Microsoft × 日本</span>
-    <span class="tag tag-other">業界動向</span>
-    <h3><a href="https://news.microsoft.com/source/asia/2026/04/03/microsoft-deepens-its-commitment-to-japan-with-10-billion-investment-in-ai-infrastructure-cybersecurity-workforce/" target="_blank" rel="noopener">Microsoft、日本向けに約1兆6000億円（$100億）のAIインフラ投資を発表</a></h3>
-    <div class="summary">Microsoftが4月3日、2026〜2029年にかけて日本に約1兆6000億円（約100億ドル）を投資する計画を発表。AIインフラ構築・サイバーセキュリティ・人材育成の三本柱で、サクラインターネットやSoftBankとのAIコンピューティング基盤の整備も進める。国内AIスタートアップへの追い風として注目されている。</div>
-    <div class="source">出典: Microsoft Source Asia / CNBC</div>
-  </div>
-
-  <div class="section-title">🚀 イベント・エコシステム</div>
-
-  <div class="news-card">
-    <span class="company">Startup JAPAN 2026</span>
-    <span class="tag tag-product">イベント</span>
-    <h3><a href="https://prtimes.jp/main/html/rd/p/000000803.000049627.html" target="_blank" rel="noopener">日本最大級のスタートアップ展示会「Startup JAPAN 2026」、4月15日・16日に幕張メッセで開催</a></h3>
-    <div class="summary">Sansanが主催する日本最大級のスタートアップ展示会「Startup JAPAN 2026」が幕張メッセで開催予定。1万3000名の来場を見込み、「Startup JAPAN EXPO 2026」「Startup JAPAN FUNDeal 2026」「新規事業 大会議 2026」など複数のコンテンツが展開される。</div>
-    <div class="source">出典: PR TIMES</div>
-  </div>
-
-  <a href="https://fitersowner-a11y.github.io/startup-news/" class="back-link">← ニュース一覧に戻る</a>
+  <a href="https://fitersowner-a11y.github.io/startup-news/" class="back-link">&#x2190; ニュース一覧に戻る</a>
 </div>
 <div class="footer">
-  自動収集・生成 by Claude AI ｜ 2026年4月5日
+  自動収集・生成 by Claude AI &#xFF5C; 2026年4月5日
 </div>
 </body>
 </html>
