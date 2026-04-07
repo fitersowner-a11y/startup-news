@@ -9,6 +9,7 @@ import html as html_module
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import urllib.request
+import urllib.error
 import xml.etree.ElementTree as ET
 
 JST = timezone(timedelta(hours=9))
@@ -17,7 +18,7 @@ date_str = now.strftime("%Y%m%d")
 year = now.strftime("%Y")
 month = now.strftime("%m")
 day = now.strftime("%d")
-weekdays_ja = ["æ", "ç«", "æ°´", "æ¨", "é", "å", "æ¥"]
+weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
 weekday_ja = weekdays_ja[now.weekday()]
 
 
@@ -35,7 +36,7 @@ def fetch_rss(url, max_items=15):
             url,
             headers={"User-Agent": "Mozilla/5.0 (compatible; startup-news-bot/1.0)"}
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp:
             content = resp.read()
         try:
             root = ET.fromstring(content)
@@ -73,12 +74,17 @@ def fetch_rss(url, max_items=15):
 
 
 FEEDS = [
-    {"name": "The Bridge (æ¥æ¬)", "url": "https://thebridge.jp/feed", "region": "japan"},
-    {"name": "TechCrunch Japan", "url": "https://jp.techcrunch.com/feed/", "region": "japan"},
+    # Japan
+    {"name": "StartupTimes (日本)", "url": "https://startup-times.jp/feed", "region": "japan"},
+    {"name": "Coral Capital", "url": "https://coralcap.co/feed/", "region": "japan"},
+    {"name": "Techable (日本)", "url": "https://techable.jp/feed", "region": "japan"},
+    {"name": "BRIDGE (日本)", "url": "https://thebridge.jp/feed/", "region": "japan"},
+    # Global
     {"name": "TechCrunch", "url": "https://techcrunch.com/category/startups/feed/", "region": "global"},
     {"name": "VentureBeat", "url": "https://venturebeat.com/feed/", "region": "global"},
-    {"name": "Reuters Tech", "url": "https://feeds.reuters.com/reuters/technologyNews", "region": "global"},
     {"name": "Crunchbase News", "url": "https://news.crunchbase.com/feed/", "region": "global"},
+    {"name": "The Information", "url": "https://www.theinformation.com/feed", "region": "global"},
+    {"name": "Bloomberg Technology", "url": "https://feeds.bloomberg.com/technology/news.rss", "region": "global"},
 ]
 
 HTML_CSS = """
@@ -120,15 +126,15 @@ def format_for_prompt(articles, max_items=20):
     lines = []
     for i, a in enumerate(articles[:max_items], 1):
         lines.append(f"\n{i}. {a['title']}")
-        lines.append(f"   åºå¸: {a['source']}")
+        lines.append(f"   出典: {a['source']}")
         lines.append(f"   URL: {a['link']}")
         if a["desc"]:
-            lines.append(f"   æ¦è¦: {a['desc']}")
-    return "\n".join(lines) if lines else "ï¼æ¬æ¥ã®è¨äºãªãï¼"
+            lines.append(f"   概要: {a['desc']}")
+    return "\n".join(lines) if lines else "（本日の記事なし）"
 
 
 def main():
-    print(f"Generating startup news for {year}/{month}/{day} ({weekday_ja}ææ¥)...")
+    print(f"Generating startup news for {year}/{month}/{day} ({weekday_ja})")
     print("\nFetching RSS feeds...")
     all_articles = []
     for feed in FEEDS:
@@ -144,44 +150,36 @@ def main():
     print(f"\nTotal: Japan {len(japan_articles)}, Global {len(global_articles)}")
 
     prompt = (
-        f"ä»¥ä¸ã®RSSããåå¾ãããã¥ã¼ã¹è¨äºãåã«ã{year}å¹´{month}æ{day}æ¥ï¼{weekday_ja}ææ¥ï¼ã®"
-        "ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹HTMLãã¼ã¸ãçæãã¦ãã ããã\n\n"
-        f"## æ¥æ¬ã®ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹\n{format_for_prompt(japan_articles)}\n\n"
-        f"## ä¸çã®ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹\n{format_for_prompt(global_articles)}\n\n"
-        "## çæã«ã¼ã«\n"
-        "1. å®å¨ãªHTMLãã¡ã¤ã«ã®ã¿åºåï¼<!DOCTYPE html>ãã</html>ã¾ã§ï¼\n"
-        "2. HTMLã®ã¿åºåãèª¬ææããã¼ã¯ãã¦ã³è¨å·ã¯ä¸åå«ããªã\n"
-        "3. ã¹ã¿ã¼ãã¢ããã«ç¡é¢ä¿ãªè¨äºã¯é¤å¤ãã\n"
-        "4. åè¨äºãã«ãã´ãªåé¡: è³éèª¿é / æ°ãµã¼ãã¹ã»ãã­ãã¯ã / M&Aã»æ¥­çåå\n"
-        "5. è±èªè¨äºã¯æ¥æ¬èªã«ç¿»è¨³ãã¦è¡¨ç¤ºãã\n"
-        "6. ãµããªã¼ã¯4ã5æ\n\n"
-        f"## CSS\n{HTML_CSS}\n\n"
-        "## HTMLæ§é \n"
-        "<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\">"
-        f"<title>ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹ - {year}å¹´{month}æ{day}æ¥</title>"
-        f"<style>{{CSS}}</style></head><body>"
-        "<div class=\"header\"><h1>ð° ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹</h1>"
-        f"<div class=\"date\">{year}å¹´{month}æ{day}æ¥ï¼{weekday_ja}ææ¥ï¼</div></div>"
+        f"以下のRSSから取得したニュース記事を元に、{year}年{month}月{day}日（{weekday_ja}曜日）の"
+        "スタートアップニュースHTMLページを生成してください。\n\n"
+        f"## 日本のスタートアップニュース\n{format_for_prompt(japan_articles)}\n\n"
+        f"## 世界のスタートアップニュース\n{format_for_prompt(global_articles)}\n\n"
+        "## 生成ルール\n"
+        "1. 完全なHTMLファイルのみ出力（<!DOCTYPE html>から</html>まで）\n"
+        "2. HTMLのみ出力。説明文やマークダウン記号(```)は一切含めない\n"
+        "3. スタートアップに無関係な記事は除外する\n"
+        "4. 各記事をカテゴリ分類: 資金調達 / 新サービス・プロダクト / M&A・業界動向\n"
+        "5. 英語記事は日本語に翻訳して表示する\n"
+        "6. サマリーは4〜5文\n\n"
+        f"## CSS（styleタグ内に使用）\n{HTML_CSS}\n\n"
+        "## HTML構造テンプレート\n"
+        f"<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\">"
+        f"<title>スタートアップニュース - {year}年{month}月{day}日</title>"
+        "<style>/* 上記CSSをここに */</style></head><body>"
+        "<div class=\"header\"><h1>\U0001f4f0 スタートアップニュース</h1>"
+        f"<div class=\"date\">{year}年{month}月{day}日（{weekday_ja}曜日）</div></div>"
         "<div class=\"container\">"
-        "<div class=\"summary-box\"><h2>ð æ¬æ¥ã®ãµããªã¼</h2><p>[ãµããªã¼]</p></div>"
-        "<div class=\"region-header\"><h2>ð¯ðµ æ¥æ¬ã®ã¹ã¿ã¼ãã¢ãã</h2>"
+        "<div class=\"summary-box\"><h2>\U0001f4cb 本日のサマリー</h2><p>[サマリー]</p></div>"
+        "<div class=\"region-header\"><h2>\U0001f1ef\U0001f1f5 日本のスタートアップ</h2>"
         "<div class=\"region-divider\"></div></div>"
-        "[æ¥æ¬ãã¥ã¼ã¹ã«ã¼ã - ã«ãã´ãªå¥]"
-        "<div class=\"region-header\"><h2>ð ä¸çã®ã¹ã¿ã¼ãã¢ãã</h2>"
+        "[日本ニュースカード - section-titleで区切ってカテゴリ別に]"
+        "<div class=\"region-header\"><h2>\U0001f30d 世界のスタートアップ</h2>"
         "<div class=\"region-divider\"></div></div>"
-        "[ã°ã­ã¼ãã«ãã¥ã¼ã¹ã«ã¼ã - ã«ãã´ãªå¥ãå½æ+å½åä»ã]"
+        "[グローバルニュースカード - カテゴリ別、region-badgeで国旗+国名付き]"
         "<a href=\"https://fitersowner-a11y.github.io/startup-news/\" class=\"back-link\">"
-        "â ãã¥ã¼ã¹ä¸è¦§ã«æ»ã</a></div>"
-        f"<div class=\"footer\">èªååéã»çæ by Claude AI ï½ {year}å¹´{month}æ{day}æ¥</div>"
-        "</body></html>\n\n"
-        "## ãã¥ã¼ã¹ã«ã¼ãå½¢å¼\n"
-        "<div class=\"news-card\"><div class=\"meta\">"
-        "<span class=\"company\">[ä¼æ¥­å]</span>"
-        "<span class=\"tag tag-funding\">è³éèª¿é</span>"
-        "<span class=\"region-badge\">ðºð¸ ç±³å½</span></div>"
-        "<h3><a href=\"[URL]\" target=\"_blank\" rel=\"noopener\">[ã¿ã¤ãã«]</a></h3>"
-        "<div class=\"summary\">[æ¦è¦]</div>"
-        "<div class=\"source\">åºå¸: [ã¡ãã£ã¢å]</div></div>"
+        "\u2190 ニュース一覧に戻る</a></div>"
+        f"<div class=\"footer\">自動収集・生成 by Claude AI \uff5c {year}年{month}月{day}日</div>"
+        "</body></html>"
     )
 
     print("\nCalling Claude API...")
@@ -196,8 +194,9 @@ def main():
     for block in response.content:
         if hasattr(block, "text"):
             text = block.text.strip()
-            if "```html" in text:
-                m = re.search(r"```html\s*(<!DOCTYPE.*?</html>)", text, re.DOTALL | re.IGNORECASE)
+            # Strip markdown code fences if present
+            if "```" in text:
+                m = re.search(r"```(?:html)?\s*(<!DOCTYPE.*?</html>)", text, re.DOTALL | re.IGNORECASE)
                 if m:
                     html_output = m.group(1)
                     break
@@ -221,16 +220,18 @@ def main():
     index_path = Path("index.html")
     if index_path.exists():
         idx = index_path.read_text(encoding="utf-8")
-        new_link = f'  <li><a href="./{date_str}/">{year}å¹´{month}æ{day}æ¥ï¼{weekday_ja}ææ¥ï¼ã®ãã¥ã¼ã¹</a></li>\n'
+        new_link = f'  <li><a href="./{date_str}/">{year}年{month}月{day}日（{weekday_ja}曜日）のニュース</a></li>\n'
         if date_str not in idx:
-            if "ãã¥ã¼ã¹ã¯æ¯æèªåçã«è¿½å ããã¾ãã" in idx:
-                idx = idx.replace("  <li>ãã¥ã¼ã¹ã¯æ¯æèªåçã«è¿½å ããã¾ãã</li>", new_link.rstrip())
+            if "ニュースは毎朝自動的に追加されます。" in idx:
+                idx = idx.replace("  <li>ニュースは毎朝自動的に追加されます。</li>", new_link.rstrip())
             else:
                 idx = idx.replace('<ul class="news-list" id="news-list">\n', f'<ul class="news-list" id="news-list">\n{new_link}')
             index_path.write_text(idx, encoding="utf-8")
+            print("Updated index.html")
 
-    print(f"\nDone! URL: https://fitersowner-a11y.github.io/startup-news/{date_str}/")
-    print(f"\n[Teams]\nð° æ¬æ¥ã®ã¹ã¿ã¼ãã¢ãããã¥ã¼ã¹ã¾ã¨ãï¼{month}/{day}ï¼ð¯ðµ æ¥æ¬ + ð ã°ã­ã¼ãã«\nð https://fitersowner-a11y.github.io/startup-news/{date_str}/")
+    url_out = f"https://fitersowner-a11y.github.io/startup-news/{date_str}/"
+    print(f"\nDone! {url_out}")
+    print(f"\n[Teams]\n\U0001f4f0 本日のスタートアップニュースまとめ（{month}/{day}）\U0001f1ef\U0001f1f5 日本 + \U0001f30d グローバル\n\U0001f449 {url_out}")
 
 
 if __name__ == "__main__":
