@@ -25,7 +25,7 @@ jobs:
 
       - name: Generate news page
         env:
-          ANTHROPIC_API_KEY: ${ { secrets.ANTHROPIC_API_KEY } }
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python scripts/generate_news.py
 
       - name: Commit and push
