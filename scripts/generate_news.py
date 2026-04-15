@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Daily Japan + Global Startup News Generator"""
+# -*- coding: utf-8 -*-
+"""Daily Japan + Global Startup News Generator with deduplication"""
 
 import anthropic
 import os
 import sys
 import re
+import json
 import html as html_module
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import urllib.request
-import urllib.error
 import xml.etree.ElementTree as ET
 
 JST = timezone(timedelta(hours=9))
@@ -21,6 +22,31 @@ day = now.strftime("%d")
 weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
 weekday_ja = weekdays_ja[now.weekday()]
 
+SEEN_FILE = Path("seen_articles.json")
+KEEP_DAYS = 30  # 過去何日分の記録を保持するか
+
+
+def load_seen_urls():
+    """過去に掲載したURLと掲載日を読み込む"""
+    if not SEEN_FILE.exists():
+        return {}
+    try:
+        data = json.loads(SEEN_FILE.read_text(encoding="utf-8"))
+        # 30日より古いエントリを削除
+        cutoff = (now - timedelta(days=KEEP_DAYS)).strftime("%Y%m%d")
+        return {url: d for url, d in data.items() if d >= cutoff}
+    except Exception as e:
+        print(f"  Warning: Could not load seen_articles.json: {e}")
+        return {}
+
+
+def save_seen_urls(seen: dict, new_urls: list):
+    """新しく掲載したURLを記録に追加して保存"""
+    for url in new_urls:
+        seen[url] = date_str
+    SEEN_FILE.write_text(json.dumps(seen, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"  Saved {len(new_urls)} new URLs to seen_articles.json (total: {len(seen)})")
+
 
 def clean_html_text(text):
     if not text:
@@ -30,7 +56,7 @@ def clean_html_text(text):
     return clean.strip()[:300]
 
 
-def fetch_rss(url, max_items=15):
+def fetch_rss(url, max_items=20):
     try:
         req = urllib.request.Request(
             url,
@@ -74,17 +100,20 @@ def fetch_rss(url, max_items=15):
 
 
 FEEDS = [
-    # Japan
-    {"name": "StartupTimes (日本)", "url": "https://startup-times.jp/feed", "region": "japan"},
+    # 日本
+    {"name": "StartupTimes", "url": "https://startup-times.jp/feed", "region": "japan"},
     {"name": "Coral Capital", "url": "https://coralcap.co/feed/", "region": "japan"},
-    {"name": "Techable (日本)", "url": "https://techable.jp/feed", "region": "japan"},
-    {"name": "BRIDGE (日本)", "url": "https://thebridge.jp/feed/", "region": "japan"},
-    # Global
+    {"name": "Techable", "url": "https://techable.jp/feed", "region": "japan"},
+    {"name": "The Bridge", "url": "https://thebridge.jp/feed/", "region": "japan"},
+    {"name": "ASCII Startup", "url": "https://ascii.jp/startup/rss.xml", "region": "japan"},
+    {"name": "Nikkei xTECH", "url": "https://xtech.nikkei.com/rss/index.rdf", "region": "japan"},
+    # グローバル
     {"name": "TechCrunch", "url": "https://techcrunch.com/category/startups/feed/", "region": "global"},
     {"name": "VentureBeat", "url": "https://venturebeat.com/feed/", "region": "global"},
     {"name": "Crunchbase News", "url": "https://news.crunchbase.com/feed/", "region": "global"},
-    {"name": "The Information", "url": "https://www.theinformation.com/feed", "region": "global"},
-    {"name": "Bloomberg Technology", "url": "https://feeds.bloomberg.com/technology/news.rss", "region": "global"},
+    {"name": "Bloomberg Tech", "url": "https://feeds.bloomberg.com/technology/news.rss", "region": "global"},
+    {"name": "Wired", "url": "https://www.wired.com/feed/rss", "region": "global"},
+    {"name": "Fast Company", "url": "https://www.fastcompany.com/technology/rss", "region": "global"},
 ]
 
 HTML_CSS = """
@@ -116,70 +145,98 @@ HTML_CSS = """
   .tag-product { background: #d1ecf1; color: #0c5460; }
   .tag-ma { background: #f8d7da; color: #721c24; }
   .tag-other { background: #e2e3e5; color: #383d41; }
+  .no-news { background: white; border-radius: 10px; padding: 24px; text-align: center; color: #aaa; margin-bottom: 12px; }
   .footer { text-align: center; padding: 32px 16px; color: #aaa; font-size: 0.85em; }
   .back-link { display: inline-block; margin-top: 24px; color: #0066cc; text-decoration: none; font-size: 0.9em; }
   .back-link:hover { text-decoration: underline; }
 """
 
 
-def format_for_prompt(articles, max_items=20):
+def format_for_prompt(articles, label):
+    if not articles:
+        return f"（{label}の新着記事なし）"
     lines = []
-    for i, a in enumerate(articles[:max_items], 1):
+    for i, a in enumerate(articles, 1):
         lines.append(f"\n{i}. {a['title']}")
         lines.append(f"   出典: {a['source']}")
         lines.append(f"   URL: {a['link']}")
         if a["desc"]:
             lines.append(f"   概要: {a['desc']}")
-    return "\n".join(lines) if lines else "（本日の記事なし）"
+    return "\n".join(lines)
+
+
+def extract_published_urls(html: str) -> list:
+    """生成されたHTMLからhrefのURLを抽出"""
+    return re.findall(r'href="(https?://[^"]+)"', html)
 
 
 def main():
-    print(f"Generating startup news for {year}/{month}/{day} ({weekday_ja})")
+    print(f"Generating startup news for {year}/{month}/{day} ({weekday_ja}曜日)")
+
+    # 過去の掲載記録を読み込み
+    seen_urls = load_seen_urls()
+    print(f"  Loaded {len(seen_urls)} seen URLs (last {KEEP_DAYS} days)")
+
+    # RSS取得
     print("\nFetching RSS feeds...")
     all_articles = []
     for feed in FEEDS:
         articles = fetch_rss(feed["url"])
-        print(f"  {feed['name']}: {len(articles)} articles")
         for a in articles:
             a["source"] = feed["name"]
             a["region"] = feed["region"]
-        all_articles.extend(articles)
+        # 掲載済みURLを除外
+        new_articles = [a for a in articles if a["link"] not in seen_urls]
+        skipped = len(articles) - len(new_articles)
+        print(f"  {feed['name']}: {len(articles)} 件取得, {skipped} 件重複除外 → {len(new_articles)} 件新着")
+        all_articles.extend(new_articles)
 
     japan_articles = [a for a in all_articles if a["region"] == "japan"]
     global_articles = [a for a in all_articles if a["region"] == "global"]
-    print(f"\nTotal: Japan {len(japan_articles)}, Global {len(global_articles)}")
+    print(f"\n新着合計: 日本 {len(japan_articles)} 件, グローバル {len(global_articles)} 件")
 
+    # プロンプト構築
     prompt = (
-        f"以下のRSSから取得したニュース記事を元に、{year}年{month}月{day}日（{weekday_ja}曜日）の"
+        f"以下のRSSから取得した【新着】ニュース記事を元に、{year}年{month}月{day}日（{weekday_ja}曜日）の"
         "スタートアップニュースHTMLページを生成してください。\n\n"
-        f"## 日本のスタートアップニュース\n{format_for_prompt(japan_articles)}\n\n"
-        f"## 世界のスタートアップニュース\n{format_for_prompt(global_articles)}\n\n"
+        "【重要】以下の記事はすべて今日初めて掲載する新着記事です。過去に掲載した記事は除外済みです。\n\n"
+        f"## 日本のスタートアップ新着ニュース\n{format_for_prompt(japan_articles, '日本')}\n\n"
+        f"## 世界のスタートアップ新着ニュース\n{format_for_prompt(global_articles, 'グローバル')}\n\n"
         "## 生成ルール\n"
         "1. 完全なHTMLファイルのみ出力（<!DOCTYPE html>から</html>まで）\n"
         "2. HTMLのみ出力。説明文やマークダウン記号(```)は一切含めない\n"
         "3. スタートアップに無関係な記事は除外する\n"
         "4. 各記事をカテゴリ分類: 資金調達 / 新サービス・プロダクト / M&A・業界動向\n"
         "5. 英語記事は日本語に翻訳して表示する\n"
-        "6. サマリーは4〜5文\n\n"
-        f"## CSS（styleタグ内に使用）\n{HTML_CSS}\n\n"
-        "## HTML構造テンプレート\n"
+        "6. 新着記事がない場合は「本日の新着ニュースはありません」と表示する\n"
+        "7. サマリーは4〜5文\n\n"
+        f"## CSS\n{HTML_CSS}\n\n"
+        "## HTML構造\n"
         f"<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\">"
         f"<title>スタートアップニュース - {year}年{month}月{day}日</title>"
-        "<style>/* 上記CSSをここに */</style></head><body>"
-        "<div class=\"header\"><h1>\U0001f4f0 スタートアップニュース</h1>"
+        "<style>/* CSSをここに */</style></head><body>"
+        "<div class=\"header\"><h1>📰 スタートアップニュース</h1>"
         f"<div class=\"date\">{year}年{month}月{day}日（{weekday_ja}曜日）</div></div>"
         "<div class=\"container\">"
-        "<div class=\"summary-box\"><h2>\U0001f4cb 本日のサマリー</h2><p>[サマリー]</p></div>"
-        "<div class=\"region-header\"><h2>\U0001f1ef\U0001f1f5 日本のスタートアップ</h2>"
+        "<div class=\"summary-box\"><h2>📋 本日のサマリー</h2><p>[サマリー]</p></div>"
+        "<div class=\"region-header\"><h2>🇯🇵 日本のスタートアップ</h2>"
         "<div class=\"region-divider\"></div></div>"
-        "[日本ニュースカード - section-titleで区切ってカテゴリ別に]"
-        "<div class=\"region-header\"><h2>\U0001f30d 世界のスタートアップ</h2>"
+        "[日本ニュースカード or no-newsメッセージ]"
+        "<div class=\"region-header\"><h2>🌍 世界のスタートアップ</h2>"
         "<div class=\"region-divider\"></div></div>"
-        "[グローバルニュースカード - カテゴリ別、region-badgeで国旗+国名付き]"
-        "<a href=\"https://fitersowner-a11y.github.io/startup-news/\" class=\"back-link\">"
-        "\u2190 ニュース一覧に戻る</a></div>"
-        f"<div class=\"footer\">自動収集・生成 by Claude AI \uff5c {year}年{month}月{day}日</div>"
-        "</body></html>"
+        "[グローバルニュースカード or no-newsメッセージ]"
+        "<a href=\"https://fitersowner-a11y.github.io/startup-news/\" class=\"back-link\">← ニュース一覧に戻る</a>"
+        "</div>"
+        f"<div class=\"footer\">自動収集・生成 by Claude AI ｜ {year}年{month}月{day}日</div>"
+        "</body></html>\n\n"
+        "## ニュースカード形式\n"
+        "<div class=\"news-card\"><div class=\"meta\">"
+        "<span class=\"company\">[企業名]</span>"
+        "<span class=\"tag tag-funding\">資金調達</span>"
+        "<span class=\"region-badge\">🇺🇸 米国</span></div>"
+        "<h3><a href=\"[URL]\" target=\"_blank\" rel=\"noopener\">[タイトル（日本語）]</a></h3>"
+        "<div class=\"summary\">[概要]</div>"
+        "<div class=\"source\">出典: [メディア名]</div></div>"
     )
 
     print("\nCalling Claude API...")
@@ -194,7 +251,6 @@ def main():
     for block in response.content:
         if hasattr(block, "text"):
             text = block.text.strip()
-            # Strip markdown code fences if present
             if "```" in text:
                 m = re.search(r"```(?:html)?\s*(<!DOCTYPE.*?</html>)", text, re.DOTALL | re.IGNORECASE)
                 if m:
@@ -207,16 +263,23 @@ def main():
                     html_output = text[start:end]
                     break
 
-    if not html_output or len(html_output) < 500:
+    if not html_output or len(html_output) < 200:
         print(f"ERROR: No valid HTML generated (length: {len(html_output)})")
         sys.exit(1)
 
     print(f"HTML: {len(html_output)} chars")
+
+    # 保存
     output_dir = Path(date_str)
     output_dir.mkdir(exist_ok=True)
     (output_dir / "index.html").write_text(html_output, encoding="utf-8")
     print(f"Saved: {date_str}/index.html")
 
+    # 今日掲載した記事URLをseen_articlesに記録
+    published_urls = [a["link"] for a in all_articles]
+    save_seen_urls(seen_urls, published_urls)
+
+    # index.html更新
     index_path = Path("index.html")
     if index_path.exists():
         idx = index_path.read_text(encoding="utf-8")
@@ -230,8 +293,8 @@ def main():
             print("Updated index.html")
 
     url_out = f"https://fitersowner-a11y.github.io/startup-news/{date_str}/"
-    print(f"\nDone! {url_out}")
-    print(f"\n[Teams]\n\U0001f4f0 本日のスタートアップニュースまとめ（{month}/{day}）\U0001f1ef\U0001f1f5 日本 + \U0001f30d グローバル\n\U0001f449 {url_out}")
+    print(f"\n✅ 完了! {url_out}")
+    print(f"\n[Teams]\n📰 本日のスタートアップニュースまとめ（{month}/{day}）🇯🇵 日本 + 🌍 グローバル\n👉 {url_out}")
 
 
 if __name__ == "__main__":
