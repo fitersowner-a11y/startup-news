@@ -23,16 +23,15 @@ weekdays_ja = ["月", "火", "水", "木", "金", "土", "日"]
 weekday_ja = weekdays_ja[now.weekday()]
 
 SEEN_FILE = Path("seen_articles.json")
-KEEP_DAYS = 30  # 過去何日分の記録を保持するか
+KEEP_DAYS = 30
+MAX_PER_REGION = 20  # プロンプトに渡す記事の上限
 
 
 def load_seen_urls():
-    """過去に掲載したURLと掲載日を読み込む"""
     if not SEEN_FILE.exists():
         return {}
     try:
         data = json.loads(SEEN_FILE.read_text(encoding="utf-8"))
-        # 30日より古いエントリを削除
         cutoff = (now - timedelta(days=KEEP_DAYS)).strftime("%Y%m%d")
         return {url: d for url, d in data.items() if d >= cutoff}
     except Exception as e:
@@ -41,11 +40,10 @@ def load_seen_urls():
 
 
 def save_seen_urls(seen: dict, new_urls: list):
-    """新しく掲載したURLを記録に追加して保存"""
     for url in new_urls:
         seen[url] = date_str
     SEEN_FILE.write_text(json.dumps(seen, ensure_ascii=False, indent=2), encoding="utf-8")
-    print(f"  Saved {len(new_urls)} new URLs to seen_articles.json (total: {len(seen)})")
+    print(f"  Saved {len(new_urls)} new URLs (total seen: {len(seen)})")
 
 
 def clean_html_text(text):
@@ -53,14 +51,14 @@ def clean_html_text(text):
         return ""
     clean = re.sub(r'<[^>]+>', '', text)
     clean = html_module.unescape(clean)
-    return clean.strip()[:300]
+    return clean.strip()[:200]
 
 
 def fetch_rss(url, max_items=20):
     try:
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; startup-news-bot/1.0)"}
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
         )
         with urllib.request.urlopen(req, timeout=20) as resp:
             content = resp.read()
@@ -75,45 +73,36 @@ def fetch_rss(url, max_items=20):
             title = clean_html_text(item.findtext("title", ""))
             link = item.findtext("link", "").strip()
             desc = clean_html_text(item.findtext("description", ""))
-            pub = item.findtext("pubDate", "")
             if title and link:
-                items.append({"title": title, "link": link, "desc": desc, "pub": pub})
+                items.append({"title": title, "link": link, "desc": desc})
         if not items:
             atom_ns = "http://www.w3.org/2005/Atom"
             for entry in root.findall(f".//{{{atom_ns}}}entry")[:max_items]:
                 title = clean_html_text(entry.findtext(f"{{{atom_ns}}}title", ""))
-                link_el = entry.find(f"{{{atom_ns}}}link[@rel='alternate']")
-                if link_el is None:
-                    link_el = entry.find(f"{{{atom_ns}}}link")
+                link_el = entry.find(f"{{{atom_ns}}}link[@rel='alternate']") or entry.find(f"{{{atom_ns}}}link")
                 link = link_el.get("href", "") if link_el is not None else ""
-                desc = clean_html_text(
-                    entry.findtext(f"{{{atom_ns}}}summary", "") or
-                    entry.findtext(f"{{{atom_ns}}}content", "")
-                )
-                pub = entry.findtext(f"{{{atom_ns}}}updated", "")
+                desc = clean_html_text(entry.findtext(f"{{{atom_ns}}}summary", "") or entry.findtext(f"{{{atom_ns}}}content", ""))
                 if title and link:
-                    items.append({"title": title, "link": link, "desc": desc, "pub": pub})
+                    items.append({"title": title, "link": link, "desc": desc})
         return items
     except Exception as e:
-        print(f"  Warning: Failed to fetch {url}: {e}")
+        print(f"  Warning: {url}: {e}")
         return []
 
 
 FEEDS = [
-    # 日本
-    {"name": "StartupTimes", "url": "https://startup-times.jp/feed", "region": "japan"},
-    {"name": "Coral Capital", "url": "https://coralcap.co/feed/", "region": "japan"},
-    {"name": "Techable", "url": "https://techable.jp/feed", "region": "japan"},
-    {"name": "The Bridge", "url": "https://thebridge.jp/feed/", "region": "japan"},
-    {"name": "ASCII Startup", "url": "https://ascii.jp/startup/rss.xml", "region": "japan"},
-    {"name": "Nikkei xTECH", "url": "https://xtech.nikkei.com/rss/index.rdf", "region": "japan"},
-    # グローバル
-    {"name": "TechCrunch", "url": "https://techcrunch.com/category/startups/feed/", "region": "global"},
-    {"name": "VentureBeat", "url": "https://venturebeat.com/feed/", "region": "global"},
-    {"name": "Crunchbase News", "url": "https://news.crunchbase.com/feed/", "region": "global"},
-    {"name": "Bloomberg Tech", "url": "https://feeds.bloomberg.com/technology/news.rss", "region": "global"},
-    {"name": "Wired", "url": "https://www.wired.com/feed/rss", "region": "global"},
-    {"name": "Fast Company", "url": "https://www.fastcompany.com/technology/rss", "region": "global"},
+    # 日本（Bot制限が少ないフィードを優先）
+    {"name": "Coral Capital",    "url": "https://coralcap.co/feed/",                                   "region": "japan"},
+    {"name": "INITIAL",          "url": "https://initial.inc/feed",                                    "region": "japan"},
+    {"name": "Startup DB",       "url": "https://startupdb.net/feed",                                  "region": "japan"},
+    {"name": "PR Times IT",      "url": "https://prtimes.jp/rss/topics/technology/new/index.rdf",      "region": "japan"},
+    {"name": "ITmedia News",     "url": "https://www.itmedia.co.jp/rss/subtop/news/index.xml",         "region": "japan"},
+    {"name": "Impress Watch",    "url": "https://www.watch.impress.co.jp/data/rss/1.0/ipw/feed.rdf",   "region": "japan"},
+    # グローバル（上限を絞る）
+    {"name": "TechCrunch",       "url": "https://techcrunch.com/category/startups/feed/",              "region": "global"},
+    {"name": "Crunchbase News",  "url": "https://news.crunchbase.com/feed/",                           "region": "global"},
+    {"name": "VentureBeat",      "url": "https://venturebeat.com/category/business/feed/",             "region": "global"},
+    {"name": "Bloomberg Tech",   "url": "https://feeds.bloomberg.com/technology/news.rss",             "region": "global"},
 ]
 
 HTML_CSS = """
@@ -145,141 +134,182 @@ HTML_CSS = """
   .tag-product { background: #d1ecf1; color: #0c5460; }
   .tag-ma { background: #f8d7da; color: #721c24; }
   .tag-other { background: #e2e3e5; color: #383d41; }
-  .no-news { background: white; border-radius: 10px; padding: 24px; text-align: center; color: #aaa; margin-bottom: 12px; }
+  .no-news { background: white; border-radius: 10px; padding: 24px; text-align: center; color: #999; margin-bottom: 12px; font-size: 0.95em; }
   .footer { text-align: center; padding: 32px 16px; color: #aaa; font-size: 0.85em; }
   .back-link { display: inline-block; margin-top: 24px; color: #0066cc; text-decoration: none; font-size: 0.9em; }
   .back-link:hover { text-decoration: underline; }
 """
 
 
-def format_for_prompt(articles, label):
+def format_articles(articles):
     if not articles:
-        return f"（{label}の新着記事なし）"
+        return "（新着記事なし）"
     lines = []
     for i, a in enumerate(articles, 1):
-        lines.append(f"\n{i}. {a['title']}")
-        lines.append(f"   出典: {a['source']}")
+        lines.append(f"{i}. [{a['source']}] {a['title']}")
         lines.append(f"   URL: {a['link']}")
         if a["desc"]:
             lines.append(f"   概要: {a['desc']}")
     return "\n".join(lines)
 
 
-def extract_published_urls(html: str) -> list:
-    """生成されたHTMLからhrefのURLを抽出"""
-    return re.findall(r'href="(https?://[^"]+)"', html)
+def build_prompt(japan_articles, global_articles):
+    return f"""以下の新着ニュース記事を使って、{year}年{month}月{day}日（{weekday_ja}曜日）のスタートアップニュースページのHTMLを生成してください。
+
+## 日本の新着ニュース（{len(japan_articles)}件）
+{format_articles(japan_articles)}
+
+## 世界の新着ニュース（{len(global_articles)}件）
+{format_articles(global_articles)}
+
+## ルール
+- スタートアップ・テック・ビジネスに関係ない記事は除外
+- 各記事をカテゴリ分類: 資金調達 / 新サービス・プロダクト / M&A・業界動向
+- 英語記事は日本語に翻訳
+- 新着なしの場合は「本日の新着ニュースはありません」と表示
+- サマリーは3〜4文
+
+## 出力形式
+<!DOCTYPE html>のみ出力（説明文・```不要）
+
+## HTML/CSS
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スタートアップニュース - {year}年{month}月{day}日</title>
+<style>{HTML_CSS}</style>
+</head>
+<body>
+<div class="header">
+  <h1>📰 スタートアップニュース</h1>
+  <div class="date">{year}年{month}月{day}日（{weekday_ja}曜日）</div>
+</div>
+<div class="container">
+  <div class="summary-box">
+    <h2>📋 本日のサマリー</h2>
+    <p>【ここにサマリー】</p>
+  </div>
+
+  <div class="region-header"><h2>🇯🇵 日本のスタートアップ</h2><div class="region-divider"></div></div>
+  <div class="section-title">💰 資金調達</div>
+  【日本・資金調達カード or <div class="no-news">新着なし</div>】
+
+  <div class="section-title">🚀 新サービス・プロダクト</div>
+  【日本・新サービスカード】
+
+  <div class="section-title">🤝 M&A・業界動向</div>
+  【日本・M&Aカード】
+
+  <div class="region-header"><h2>🌍 世界のスタートアップ</h2><div class="region-divider"></div></div>
+  <div class="section-title">💰 資金調達</div>
+  【グローバル・資金調達カード】
+
+  <div class="section-title">🚀 新サービス・プロダクト</div>
+  【グローバル・新サービスカード】
+
+  <div class="section-title">🤝 M&A・業界動向</div>
+  【グローバル・M&Aカード】
+
+  <a href="https://fitersowner-a11y.github.io/startup-news/" class="back-link">← ニュース一覧に戻る</a>
+</div>
+<div class="footer">自動収集・生成 by Claude AI ｜ {year}年{month}月{day}日</div>
+</body>
+</html>
+
+## ニュースカード形式
+<div class="news-card">
+  <div class="meta">
+    <span class="company">企業名</span>
+    <span class="tag tag-funding">資金調達</span>
+    <span class="region-badge">🇺🇸 米国</span>
+  </div>
+  <h3><a href="URL" target="_blank" rel="noopener">タイトル（日本語）</a></h3>
+  <div class="summary">概要1〜2文</div>
+  <div class="source">出典: メディア名</div>
+</div>"""
+
+
+def extract_html(text):
+    """レスポンスからHTMLを抽出"""
+    text = text.strip()
+    # コードブロック内のHTMLを探す
+    m = re.search(r"```(?:html)?\s*(<!DOCTYPE.*?</html>)", text, re.DOTALL | re.IGNORECASE)
+    if m:
+        return m.group(1)
+    # 直接HTMLを探す
+    low = text.lower()
+    start = low.find("<!doctype html>")
+    if start == -1:
+        start = low.find("<html")
+    end = low.rfind("</html>")
+    if start != -1 and end != -1 and end > start:
+        return text[start:end + len("</html>")]
+    return ""
 
 
 def main():
     print(f"Generating startup news for {year}/{month}/{day} ({weekday_ja}曜日)")
 
-    # 過去の掲載記録を読み込み
     seen_urls = load_seen_urls()
-    print(f"  Loaded {len(seen_urls)} seen URLs (last {KEEP_DAYS} days)")
+    print(f"  Loaded {len(seen_urls)} seen URLs")
 
-    # RSS取得
     print("\nFetching RSS feeds...")
     all_articles = []
     for feed in FEEDS:
         articles = fetch_rss(feed["url"])
-        for a in articles:
+        new = [a for a in articles if a["link"] not in seen_urls]
+        skipped = len(articles) - len(new)
+        status = f"{len(articles)}件取得"
+        if skipped:
+            status += f", {skipped}件重複除外"
+        status += f" → {len(new)}件新着"
+        print(f"  {feed['name']}: {status}")
+        for a in new:
             a["source"] = feed["name"]
             a["region"] = feed["region"]
-        # 掲載済みURLを除外
-        new_articles = [a for a in articles if a["link"] not in seen_urls]
-        skipped = len(articles) - len(new_articles)
-        print(f"  {feed['name']}: {len(articles)} 件取得, {skipped} 件重複除外 → {len(new_articles)} 件新着")
-        all_articles.extend(new_articles)
+        all_articles.extend(new)
 
-    japan_articles = [a for a in all_articles if a["region"] == "japan"]
-    global_articles = [a for a in all_articles if a["region"] == "global"]
-    print(f"\n新着合計: 日本 {len(japan_articles)} 件, グローバル {len(global_articles)} 件")
-
-    # プロンプト構築
-    prompt = (
-        f"以下のRSSから取得した【新着】ニュース記事を元に、{year}年{month}月{day}日（{weekday_ja}曜日）の"
-        "スタートアップニュースHTMLページを生成してください。\n\n"
-        "【重要】以下の記事はすべて今日初めて掲載する新着記事です。過去に掲載した記事は除外済みです。\n\n"
-        f"## 日本のスタートアップ新着ニュース\n{format_for_prompt(japan_articles, '日本')}\n\n"
-        f"## 世界のスタートアップ新着ニュース\n{format_for_prompt(global_articles, 'グローバル')}\n\n"
-        "## 生成ルール\n"
-        "1. 完全なHTMLファイルのみ出力（<!DOCTYPE html>から</html>まで）\n"
-        "2. HTMLのみ出力。説明文やマークダウン記号(```)は一切含めない\n"
-        "3. スタートアップに無関係な記事は除外する\n"
-        "4. 各記事をカテゴリ分類: 資金調達 / 新サービス・プロダクト / M&A・業界動向\n"
-        "5. 英語記事は日本語に翻訳して表示する\n"
-        "6. 新着記事がない場合は「本日の新着ニュースはありません」と表示する\n"
-        "7. サマリーは4〜5文\n\n"
-        f"## CSS\n{HTML_CSS}\n\n"
-        "## HTML構造\n"
-        f"<!DOCTYPE html><html lang=\"ja\"><head><meta charset=\"UTF-8\">"
-        f"<title>スタートアップニュース - {year}年{month}月{day}日</title>"
-        "<style>/* CSSをここに */</style></head><body>"
-        "<div class=\"header\"><h1>📰 スタートアップニュース</h1>"
-        f"<div class=\"date\">{year}年{month}月{day}日（{weekday_ja}曜日）</div></div>"
-        "<div class=\"container\">"
-        "<div class=\"summary-box\"><h2>📋 本日のサマリー</h2><p>[サマリー]</p></div>"
-        "<div class=\"region-header\"><h2>🇯🇵 日本のスタートアップ</h2>"
-        "<div class=\"region-divider\"></div></div>"
-        "[日本ニュースカード or no-newsメッセージ]"
-        "<div class=\"region-header\"><h2>🌍 世界のスタートアップ</h2>"
-        "<div class=\"region-divider\"></div></div>"
-        "[グローバルニュースカード or no-newsメッセージ]"
-        "<a href=\"https://fitersowner-a11y.github.io/startup-news/\" class=\"back-link\">← ニュース一覧に戻る</a>"
-        "</div>"
-        f"<div class=\"footer\">自動収集・生成 by Claude AI ｜ {year}年{month}月{day}日</div>"
-        "</body></html>\n\n"
-        "## ニュースカード形式\n"
-        "<div class=\"news-card\"><div class=\"meta\">"
-        "<span class=\"company\">[企業名]</span>"
-        "<span class=\"tag tag-funding\">資金調達</span>"
-        "<span class=\"region-badge\">🇺🇸 米国</span></div>"
-        "<h3><a href=\"[URL]\" target=\"_blank\" rel=\"noopener\">[タイトル（日本語）]</a></h3>"
-        "<div class=\"summary\">[概要]</div>"
-        "<div class=\"source\">出典: [メディア名]</div></div>"
-    )
+    japan_articles = [a for a in all_articles if a["region"] == "japan"][:MAX_PER_REGION]
+    global_articles = [a for a in all_articles if a["region"] == "global"][:MAX_PER_REGION]
+    print(f"\n新着: 日本 {len(japan_articles)}件, グローバル {len(global_articles)}件")
 
     print("\nCalling Claude API...")
     client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
     response = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=16000,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": build_prompt(japan_articles, global_articles)}],
     )
 
     html_output = ""
     for block in response.content:
-        if hasattr(block, "text"):
-            text = block.text.strip()
-            if "```" in text:
-                m = re.search(r"```(?:html)?\s*(<!DOCTYPE.*?</html>)", text, re.DOTALL | re.IGNORECASE)
-                if m:
-                    html_output = m.group(1)
-                    break
-            if "<!doctype html>" in text.lower():
-                start = text.lower().find("<!doctype html>")
-                end = text.lower().rfind("</html>") + len("</html>")
-                if start != -1 and end > start:
-                    html_output = text[start:end]
-                    break
+        if hasattr(block, "text") and block.text:
+            html_output = extract_html(block.text)
+            if html_output:
+                break
 
-    if not html_output or len(html_output) < 200:
-        print(f"ERROR: No valid HTML generated (length: {len(html_output)})")
+    if not html_output or len(html_output) < 500:
+        # デバッグ用: レスポンス内容を出力
+        print("ERROR: Could not extract valid HTML")
+        for block in response.content:
+            if hasattr(block, "text"):
+                print(f"Response preview: {block.text[:300]}")
         sys.exit(1)
 
-    print(f"HTML: {len(html_output)} chars")
+    print(f"HTML generated: {len(html_output)} chars")
 
-    # 保存
     output_dir = Path(date_str)
     output_dir.mkdir(exist_ok=True)
     (output_dir / "index.html").write_text(html_output, encoding="utf-8")
     print(f"Saved: {date_str}/index.html")
 
-    # 今日掲載した記事URLをseen_articlesに記録
-    published_urls = [a["link"] for a in all_articles]
+    # 掲載済みURLを記録
+    published_urls = [a["link"] for a in japan_articles + global_articles]
     save_seen_urls(seen_urls, published_urls)
 
-    # index.html更新
+    # トップページ更新
     index_path = Path("index.html")
     if index_path.exists():
         idx = index_path.read_text(encoding="utf-8")
